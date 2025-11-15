@@ -15,7 +15,7 @@ class DXF:
 
         def get(self, index):
             if index < self.length:
-                return self.content[index][:-1]
+                return self.content[index][:-1].strip()
             else:
                 return None
 
