@@ -1,4 +1,7 @@
 import tkinter as tk
+import tkinter.simpledialog as simpledialog
+
+from core import dxf
 from core.dxf import *
 
 from viewport import Viewport
@@ -10,9 +13,18 @@ class Application():
         self.window.title("Dexfer")
         self.window.geometry(f"{windowX}x{windowY}")
 
+        self.dxf = dxf.DXF()
+        self.isDxfMounted: bool = False
+        self.layerFilters = {}
+
         self._create_sidebars()
         self._create_viewport()
         self._create_viewport_buttons()
+        self._create_dxf_button()
+        self._create_dxf_filter_tab()
+
+
+
 
     def _create_sidebars(self):
         # Sidebar to display functions
@@ -26,11 +38,14 @@ class Application():
         self.actionbarRect = tk.Frame(self.window, width=50, bg="lightgray")
         self.actionbarRect.pack(fill=tk.Y, side=tk.RIGHT)
 
+
     def _create_viewport(self):
         self.viewportRect = tk.Frame(self.window, width=800)
         self.viewportRect.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        self.viewport = Viewport(self.viewportRect, EntitySection())
+        self.viewport = Viewport(self.viewportRect)
 
+    # Binds the buttons for panning on the GUI
+    # Binds keyboard buttons (arrows) for panning, and (=, -) for zoom out and in respectively
     def _create_viewport_buttons(self):
         # Buttons to scale viewport
         self.zeroButton = tk.Button(self.actionbarRect, text="o", width=2, background="lightgray",
@@ -61,13 +76,59 @@ class Application():
         self.window.bind("<KeyPress-Down>", lambda _: self.viewport.pan_increment(0, -10))
 
 
+    def _create_dxf_button(self):
+        self.dxfButton = tk.Button(self.actionbarRect, text="dxf", width=2, background="lightgray",
+                                    highlightthickness=0, border=0, activeforeground="pink",
+                                    activebackground="lightgray",
+                                    font=('Arial', 16, "bold"), foreground="white",
+                                    command=lambda: self._mount_dxf())
+        self.dxfButton.pack(pady=50, padx=5)
+
+
+    def _mount_dxf(self):
+        #Getting DXF Filename
+        result = simpledialog.askstring("", "Enter the filename of the DXF file: ")
+
+        self.dxf = dxf.DXF()
+        try:
+            self.dxf.parse(result if (result[-4:].lower() == ".dxf") else (result+".dxf"))
+            self.isDxfMounted = True
+        except FileNotFoundError:
+            self.isDxfMounted = False
+            print(f"File {result if (result[-4:].lower() == ".dxf") else (result+".dxf")} not found.")
+        except TypeError:
+            print("No input provided. Ignoring.")
+
+        if self.isDxfMounted:
+            self._create_dxf_filter_tab()
+            self.viewport.mount_dxf(self.dxf.sections["ENTITIES"], self.layerFilters)
+
+
+    def _create_dxf_filter_tab(self):
+        self.layerFilters = {}
+        if self.isDxfMounted:
+            for layer in self.dxf.sections["ENTITIES"].layers:
+                self.layerFilters[layer] = [tk.BooleanVar(), {}]
+                self.layerFilters[layer][0].set(True)
+
+                enableButton = tk.Checkbutton(self.funcPane, background="white", highlightthickness=0, border=0,
+                                               text=layer,
+                                               variable=self.layerFilters[layer][0], activeforeground="pink",
+                                               activebackground="lightgray", fg="darkgray",
+                                               onvalue=1, offvalue=0, height=1, command=lambda: {self.viewport.clear(), self.viewport.draw_all()})
+                enableButton.pack(padx=5, pady=5, side=tk.TOP, anchor=tk.W)
+
+                for entity in self.dxf.sections["ENTITIES"].layers[layer]:
+                    self.layerFilters[layer][1][entity] = tk.BooleanVar()
+                    self.layerFilters[layer][1][entity].set(True)
+
+                    enableButton = tk.Checkbutton(self.funcPane, background="white", highlightthickness=0, border=0,
+                                                  text=entity.capitalize(),
+                                                  variable=self.layerFilters[layer][1][entity], activeforeground="pink",
+                                                  activebackground="lightgray",fg="darkgray",
+                                                  onvalue=1, offvalue=0, height=1, width=10,
+                                                  command=lambda: {self.viewport.clear(), self.viewport.draw_all()})
+                    enableButton.pack(padx=35, pady=5, side=tk.TOP, anchor=tk.W)
+
     def run(self):
-        self.viewport.clear()
-
-        dxf:DXF = DXF()
-        dxf.parse("sample.dxf")
-
-        self.viewport.entities = dxf.sections["ENTITIES"]
-        self.viewport.draw_all()
-
         self.window.mainloop()

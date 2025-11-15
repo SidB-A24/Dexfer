@@ -1,11 +1,12 @@
 import tkinter as tk
 from core.drawFunctions import *
+from core.sections import EntitySection
+
 
 class Viewport(tk.Canvas):
-    def __init__(self, master, entities):
+    def __init__(self, master, entities=EntitySection()):
         self.entities = entities
         self.layerFilters = {}
-        self.entityFilters = {}
 
         super().__init__(master, bg="white", borderwidth=0, highlightthickness=1)
         self.pack(fill=tk.BOTH, expand=True)
@@ -14,6 +15,15 @@ class Viewport(tk.Canvas):
         self.scale_y:float = 1
         self.pan_x:float = 0
         self.pan_y:float = 0
+
+    def mount_dxf(self, entities:EntitySection, layerFilters):
+        self.layerFilters = layerFilters
+        self.entities = entities
+
+        self.clear()
+        self.pan_zero()
+        self.scale_zero()
+        self.draw_all()
 
     # Viewport Scaling Methods
     def scale_increment(self, scale_x:float, scale_y:float):
@@ -51,10 +61,12 @@ class Viewport(tk.Canvas):
             DRAWFUNCTIONS[entity.entityType](self, entity)
 
     def draw_all(self):
-        for layer in self.entities.layers.values():
-            for entityType in layer.values():
-                for entity in entityType:
-                    self._draw_entity(entity)
+        for layer in self.entities.layers:
+            if self.layerFilters[layer][0].get():
+                for entityType in self.entities.layers[layer]:
+                    if self.layerFilters[layer][1][entityType].get():
+                        for entity in self.entities.layers[layer][entityType]:
+                            self._draw_entity(entity)
 
     def clear(self):
         self.delete("all")
