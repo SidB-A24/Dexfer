@@ -6,6 +6,8 @@ class  Entity:
         self.parameters:dict = {}
         self.layerName:str = ""
 
+    def write_out(self, write_function):
+        pass
 
     def set_layer_name(self, layerName):
         self.layerName = layerName
@@ -25,15 +27,21 @@ class LineEntity(Entity):
         self.x2: float = 0
         self.y2: float = 0
 
+    def write_out(self, write_function):
+        write_function(10, self.x1)
+        write_function(20, self.y1)
+        write_function(11, self.x2)
+        write_function(21, self.y2)
+
     def set_parameter(self, parameterKey, parameterValue):
-        match parameterKey:
-            case "10":
+        match int(parameterKey):
+            case 10:
                 self.x1 = float(parameterValue)
-            case "11":
+            case 11:
                 self.x2 = float(parameterValue)
-            case "20":
+            case 20:
                 self.y1 = float(parameterValue)
-            case "21":
+            case 21:
                 self.y2 = float(parameterValue)
 
 class CircleEntity(Entity):
@@ -46,13 +54,18 @@ class CircleEntity(Entity):
         self.y: float = 0
         self.r: float = 0
 
+    def write_out(self, write_function):
+        write_function(10, self.x)
+        write_function(20, self.y)
+        write_function(40, self.r)
+
     def set_parameter(self, parameterKey, parameterValue):
-        match parameterKey:
-            case "10":
+        match int(parameterKey):
+            case 10:
                 self.x = float(parameterValue)
-            case "20":
+            case 20:
                 self.y = float(parameterValue)
-            case "40":
+            case 40:
                 self.r = float(parameterValue)
 
 
@@ -68,18 +81,24 @@ class ArcEntity(Entity):
         self.A: float = 0       # Start Angle
         self.B: float = 0       # End Angle
 
+    def write_out(self, write_function):
+        write_function(10, self.x)
+        write_function(20, self.y)
+        write_function(40, self.r)
+        write_function(50, self.A)
+        write_function(51, self.B)
 
     def set_parameter(self, parameterKey, parameterValue):
-        match parameterKey:
-            case "10":
+        match int(parameterKey):
+            case 10:
                 self.x = float(parameterValue)
-            case "20":
+            case 20:
                 self.y = float(parameterValue)
-            case "40":
+            case 40:
                 self.r = float(parameterValue)
-            case "50":
+            case 50:
                 self.A = float(parameterValue)
-            case "51":
+            case 51:
                 self.B = float(parameterValue)
 
 

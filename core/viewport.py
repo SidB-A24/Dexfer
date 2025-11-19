@@ -68,6 +68,8 @@ class Viewport(tk.Canvas):
                         for entity in self.entities.layers[layer][entityType]:
                             self._draw_entity(entity)
 
+
+
     def clear(self):
         self.delete("all")
 

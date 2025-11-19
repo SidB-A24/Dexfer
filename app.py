@@ -1,10 +1,10 @@
-import tkinter as tk
 import tkinter.simpledialog as simpledialog
 
 from core import dxf
+from core.drawFunctions import DRAWFUNCTIONS
 from core.dxf import *
 
-from viewport import Viewport
+from core.viewport import Viewport
 
 class Application():
     def __init__(self, windowX: int = 960, windowY: int = 720):
@@ -22,8 +22,23 @@ class Application():
         self._create_viewport_buttons()
         self._create_dxf_button()
         self._create_dxf_filter_tab()
+        self._create_add_entity_buttons()
+        self._create_save_dxf_button()
+
+    def _add_entity(self, entityType, entityParams: dict):
+        self.dxf.add_entity(entityType, entityParams)
+        self._create_dxf_filter_tab()
+        self.viewport.mount_dxf(self.dxf.sections["ENTITIES"], self.layerFilters)
+        self.viewport.clear()
+        self.viewport.draw_all()
 
 
+    def _popup_add_entity(self, entityType):
+        inputWindow = tk.Toplevel()
+        inputWindow.title("Add new " + entityType.capitalize())
+        inputWindow.geometry("200x400")
+
+        self.dxf.populate_fields(entityType, inputWindow, self._add_entity)
 
 
     def _create_sidebars(self):
@@ -43,6 +58,7 @@ class Application():
         self.viewportRect = tk.Frame(self.window, width=800)
         self.viewportRect.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self.viewport = Viewport(self.viewportRect)
+
 
     # Binds the buttons for panning on the GUI
     # Binds keyboard buttons (arrows) for panning, and (=, -) for zoom out and in respectively
@@ -105,6 +121,9 @@ class Application():
 
 
     def _create_dxf_filter_tab(self):
+        for checkButton in self.funcPane.winfo_children():
+            checkButton.destroy()
+
         self.layerFilters = {}
         if self.isDxfMounted:
             for layer in self.dxf.sections["ENTITIES"].layers:
@@ -132,3 +151,34 @@ class Application():
 
     def run(self):
         self.window.mainloop()
+
+    def _create_add_entity_buttons(self):
+
+        for entity in DRAWFUNCTIONS.keys():
+            entityButton = tk.Button(self.actionbarRect, text=entity.capitalize(), width=2, background="lightgray",
+                                     highlightthickness=0, border=0, activeforeground="pink",
+                                     activebackground="lightgray",
+                                     font=('Arial', 16, "bold"), foreground="white",
+                                     command=lambda e=entity: (self._popup_add_entity(e) if self.isDxfMounted else None))
+            entityButton.pack(pady=10, padx=5)
+
+    def _popup_save_dxf(self):
+        result = simpledialog.askstring("Save DXF", "Enter the filename of the DXF file: ")
+
+        self.dxf.save(result if (result[-4:].lower() == ".dxf") else (result+".dxf"))
+
+    def _create_save_dxf_button(self):
+        saveDXFButton = tk.Button(self.actionbarRect, text="Save", width=2, background="lightgray",
+                                 highlightthickness=0, border=0, activeforeground="pink",
+                                 activebackground="lightgray",
+                                 font=('Arial', 16, "bold"), foreground="white",
+                                 command=lambda: (
+                                     self._popup_save_dxf() if self.isDxfMounted else None))
+        saveDXFButton.pack(pady=40, padx=5)
+
+
+
+
+
+
+
